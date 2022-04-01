@@ -1,0 +1,9 @@
+{
+  "name": "mmClient",
+  "version": "1.0.0",
+  "main": "index.mjs",
+  "dependencies": {
+    "lru-cache": "7.7.3",
+    "ws": "8.5.0"
+  }
+}
