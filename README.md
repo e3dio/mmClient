@@ -11,11 +11,11 @@ Creates a client to connect to Maxmind [mmServer](https://github.com/e3dio/mmSer
 ```javascript
 import { connectMaxmind } from 'mmClient';
 
-const getIPinfo = connectMaxmind(port, cacheSize);
+const getIPinfo = await connectMaxmind(port);
 
 const ipInfo = await getIPinfo(ip);
 ```
-Example returned data object:
+Example ipInfo data object:
 ```javascript
 {
 	ip: '35.87.116.61',

@@ -1,26 +1,32 @@
 import WebSocket from 'ws';
 import LRU from 'lru-cache';
 
-export const connectMaxmind = ({ port, cacheSize = 200, host = 'localhost', protocol = 'ws' }) => {
+export const connectMaxmind = (portOrUrl, cacheSize = 100) => {
 
-	const sendMap = new Map();
+	const port = Number(portOrUrl);
+	const ws = new WebSocket(port ? `ws://localhost:${port}` : portOrUrl, { generateMask: buf => {} });
 	const cache = new LRU({ max: cacheSize });
-	const ws = new WebSocket(`${protocol}://${host}:${port}`, { generateMask: buf => {} });
+	const sendMap = new Map();
 
 	ws.on('message', (data) => {
-	   const d = JSON.parse(data);
-	   const promise = sendMap.get(d.ip);
-	   if (!promise) return;
-	   cache.set(d.ip, d);
-	   sendMap.delete(d.ip);
-	   promise.resolve(d);
+		data = JSON.parse(data);
+		cache.set(data.ip, data);
+		sendMap.get(data.ip).forEach(sent => sent.resolve(data));
 	});
 
-	return (ip) => new Promise((resolve, reject) => {
+	const getIPinfo = (ip) => new Promise((resolve, reject) => {
 		const val = cache.get(ip);
 		if (val) return resolve(val);
-		sendMap.set(ip, { resolve, reject });
+		const sent = sendMap.get(ip);
+		if (sent) sent.push({ resolve, reject });
+		else sendMap.set(ip, [ { resolve, reject } ]);
 		ws.send(ip);
-	}).finally(() => sendMap.delete(ip));
+	}).finally(() => !sendMap.get(ip).length && sendMap.delete(ip));
 
+	return new Promise((resolve, reject) => {
+		ws.onopen = () => resolve(getIPinfo);
+		ws.onerror = () => reject('ws connection error');
+	});
+
+	// todo: send queue with auto-reconnect
 };
