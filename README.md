@@ -11,7 +11,7 @@ Creates a client to connect to Maxmind [mmServer](https://github.com/e3dio/mmSer
 ```javascript
 import { connectMaxmind } from 'mmClient';
 
-const getIPinfo = await connectMaxmind(port);
+const getIPinfo = await connectMaxmind(port); // can take a port or url: 'wss://domain.com'
 
 const ipInfo = await getIPinfo(ip);
 ```
