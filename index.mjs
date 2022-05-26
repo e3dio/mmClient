@@ -12,6 +12,7 @@ export const connectMaxmind = (portOrUrl, cacheSize = 100) => {
 		data = JSON.parse(data);
 		cache.set(data.ip, data);
 		sendMap.get(data.ip).forEach(sent => sent.resolve(data));
+		sendMap.delete(data.ip);
 	});
 
 	const getIPinfo = (ip) => new Promise((resolve, reject) => {
@@ -19,9 +20,8 @@ export const connectMaxmind = (portOrUrl, cacheSize = 100) => {
 		if (val) return resolve(val);
 		const sent = sendMap.get(ip);
 		if (sent) sent.push({ resolve, reject });
-		else sendMap.set(ip, [ { resolve, reject } ]);
-		ws.send(ip);
-	}).finally(() => !sendMap.get(ip).length && sendMap.delete(ip));
+		else { sendMap.set(ip, [ { resolve, reject } ]); ws.send(ip); }
+	});
 
 	return new Promise((resolve, reject) => {
 		ws.onopen = () => resolve(getIPinfo);
